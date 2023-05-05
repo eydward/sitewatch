@@ -2,7 +2,8 @@ import os, csv
 import time
 import requests
 from pathlib import Path
-import html2text  # TODO - HTML2TEXT IS A DEPENDENCY
+import html2text
+import emailer
 
 
 def request(name, link):
@@ -29,8 +30,8 @@ def request(name, link):
     return r
 
 
-# r is a bytes object
 def parse(r, mode):
+    # r is a bytes object
     pagecontent = ""
     if mode == "html":
         pagecontent = r.decode()
@@ -46,6 +47,22 @@ def parse(r, mode):
 
         pagecontent = h.handle(r.decode())
     return " ".join(pagecontent.split())
+
+
+def updateemail(name, link):
+    inputdict = dict()
+    inputdict["from"] = "edward3yu@gmail.com"
+    inputdict["to"] = "edward.yu@outlook.com"
+    inputdict["subject"] = "sitewatch update " + name
+
+    open(r"email-text.html", "wt").write(
+        "The page "
+        + link
+        + " has been updated."
+        + " (This is an automated message from sitewatch.)"
+    )  # update timestamp
+
+    emailer.sendemail(inputdict)
 
 
 def watch(row, path, results):
@@ -74,7 +91,7 @@ def watch(row, path, results):
             f = open(newfilepath, "wb")
             f.write(r.content)
             f.close()
-            # TODO - EMAIL IF OPTION IS SET
+            updateemail(name, link)
         with open(results, "a") as resultscsv:
             resultscsv.write(name + "," + statusstr + "\n")
         return
@@ -94,8 +111,6 @@ def watch(row, path, results):
 
         # if file changed, add new file
         if parse(Path(prevrecord).read_bytes(), mode) != pagecontent:
-            print(parse(Path(prevrecord).read_bytes(), mode))
-            print(pagecontent)
             log(True, "changed")
         else:  # don't do anything
             log(False, "unchanged")
