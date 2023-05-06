@@ -1,47 +1,51 @@
 # sitewatch
 
-A script that tells you when things update. To set this up, you need html2text `pip install html2text`.
-Set up email notifications if desired according to the instructions below.
-Then one can just run `sitewatch.py` on a schedule.
+A script that scans through sites and checks for differences for you. Requires [html2text](https://pypi.org/project/html2text/), plus other dependencies if you want email updates.
 
-# emailer setup
+After setup, you can just run `sitewatch.py`, perhaps with a scheduling tool.
 
-A script to send mass customizable emails via Gmail API.
+Probably. nothing works on not-Windows. (TODO)
 
-## project usage
+## project setup (without emails)
 
-**warning**: if sending from a different email from the previous run, make sure to delete `token.json` and replace `credentials.json`! To do this, follow the steps in "Credentials Setup".
+Two things.
 
-To mail merge:
-- Populate `email-recipients.csv` with one header row, with the strings that are required in `email-text.html`, and the other rows with information. Headers "from", "to", and "subject" are required. (Note that "cc" and "bcc" are not, and the headers are case sensitive.)
-- Write in `email-text.html` with the HTML of the email. Put to-be-replaced things in brackets, e.g. `{num}`.
-- The script is `emailer.py`.
+1. You can change the list of sites in `sitelist.csv`. Each row is one site. There are three columns:
+    1. The name you want the site to go by (e.g. "xkcd")
+    2. The link to the site (e.g. "[xkcd.com](https://www.xkcd.com)")
+    3. The mode you want to process the site by:
+        - `html` mode will read the HTML of the page. (Note that for most modern websites  this will give you a bunch of false positives.)
+        - `text` mode will read the words on the page, and also check the names of the images.
+        - `link` mode does everything `text` does, but also checks all the hyperlinks are the same.
 
-### credentials setup (each time)
-1. try running `emailer.py' directly; it might work!
-2. go to https://console.cloud.google.com, find the relevant API/project/
-3. click the "download json" button and move the json into this directory; call it `credentials.json'
-4. run `emailer.py'; this should give a Google log in screen
-5. ending screen should be `The authentication flow has completed. You may close this window.`
+    sitewatch also saves the HTML pages of websites it's seen, so you can go to `~\Documents\sitewatch` and diff them if you want to see what changed.
+    Occasionally, you also probably want to clean that folder out. (TODO - automatically do this)
 
-## project setup
+2. If you don't want email notifications when sitewatch detects a change in a site, you should write `{"emails":"false"}` into `options.json`. If you do want email notifications, proceed to the next section.
+(Note that with a bit of work you can e.g. use this to [update a Rainmeter skin](https://forum.rainmeter.net/viewtopic.php?t=18117) instead.)
 
-### 
-You need these Google things:
+## email setup instructions
+
+If you want email notifications then write `{"emails":"true", "from":"(send from email)", "to":"(send to email)"}` into `options.json`. Your "send from" email must be accessible with the Gmail API, so any gmail should work.
+
+Next, get:
 - google-api-python-client: `pip install --upgrade google-api-python-client`
 - google-auth-oauthlib: `pip install google-auth-oauthlib`
 
-### credentials setup (one-time per email)
-1. Go to console.cloud.google.com, and log in with the desired email.
+Credentials setup (with the "from" email):
+
+1. Go to [console.cloud.google.com](console.cloud.google.com), and log in with the desired email.
 2. Make a new project, or use an arbitrary existing one. Set its location to "No Organization".
 
-#### configure oauth consent screen
+Configure oauth consent screen:
+
 3. At the OAuth Consent Screen, set the user type to "External" (since you don't have an organization).
 4. Fill in the app name as "emailer" (or whatever; it doesn't matter), and the support email as your email. No optional fields matter.
 5. To select scopes, first go to the API library from the OAuth Consent Screen (in a separate tab) and enable the Gmail API. Then, return to the app-registration screen and add the Gmail modify scope: `https://www.googleapis.com/auth/gmail.modify`.
 6. Set yourself as a test user.
 
-#### get credentials
+Get credentials:
+
 8. Go to Menu > APIs & Services > Credentials.
 9. Click Create Credentials > OAuth client ID.
 10. Set the application type as "Desktop App", fill in other fields, and finish.

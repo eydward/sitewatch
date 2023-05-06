@@ -1,13 +1,18 @@
-import os, csv
+import os, csv, json
 import time
 import requests
 from pathlib import Path
 import html2text
 import emailer
 
+# read options
+options = dict()
+with open("options.json") as json_file:
+    options = json.load(json_file)
+
 
 def request(name, link):
-    r = -1  # this is the request object
+    r = -1  # this will be the request object
     try:
         r = requests.get(
             link,
@@ -38,7 +43,7 @@ def parse(r, mode):
     else:
         h = html2text.HTML2Text()
         h.skip_internal_links = True
-        h.ignore_images = False  # ???
+        h.ignore_images = False  # unclear if we actually want to do this
         if mode == "text":
             h.ignore_links = True
             pagecontent = h.handle(r.decode())
@@ -46,13 +51,15 @@ def parse(r, mode):
             h.ignore_links = False
 
         pagecontent = h.handle(r.decode())
+
+    # resolve whitespace issues by turning everything into one space
     return " ".join(pagecontent.split())
 
 
 def updateemail(name, link):
     inputdict = dict()
-    inputdict["from"] = "edward3yu@gmail.com"
-    inputdict["to"] = "edward.yu@outlook.com"
+    inputdict["from"] = options["from"]
+    inputdict["to"] = options["to"]
     inputdict["subject"] = "sitewatch update " + name
 
     open(r"email-text.html", "wt").write(
@@ -91,13 +98,11 @@ def watch(row, path, results):
             f = open(newfilepath, "wb")
             f.write(r.content)
             f.close()
-            updateemail(name, link)
+            if options["emails"] == "true":
+                updateemail(name, link)
         with open(results, "a") as resultscsv:
             resultscsv.write(name + "," + statusstr + "\n")
         return
-
-    # TODO - SORT THROUGH BELOW CODE FROM BEFORE???
-    # recall that r.content should actually be pagecontent
 
     folderdir = os.listdir(folder)
     folderdir.sort(reverse=True)
@@ -141,5 +146,3 @@ def sitewatch():
 
 if __name__ == "__main__":
     sitewatch()
-
-# TODO - update rainmeter skin on script: https://forum.rainmeter.net/viewtopic.php?t=18117
