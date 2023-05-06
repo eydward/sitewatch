@@ -1,6 +1,6 @@
 # sitewatch
 
-A script that scans through sites and checks for differences for you. Requires [html2text](https://pypi.org/project/html2text/), plus other dependencies if you want email updates.
+A script that scans through sites and checks for differences for you. Requires [requests](https://pypi.org/project/requests/) and [html2text](https://pypi.org/project/html2text/), plus other dependencies if you want email updates.
 
 After setup, you can just run `sitewatch.py`, perhaps with a scheduling tool.
 
